@@ -1,0 +1,4 @@
+Login to the app.
+Navigate to the profile page immediately after login.
+Observe the error in the console (GET /api/profile/get-profile/undefined).
+Reload the browser or navigate to another page and revisit the profile page to observe it working correctly.
