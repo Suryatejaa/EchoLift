@@ -121,8 +121,98 @@ const postSchema = new Schema({
             type: [Schema.Types.ObjectId],
             ref: 'User',
             default: []
+        },
+        approvedUsers: {
+            type: [Schema.Types.ObjectId],
+            ref: 'User',
+            default: []
+        },
+        payAmount: {
+            type: Number,
+            default: 0
         }
-    }
+    },
+    platform: {
+        type: String,
+        required: true
+    },
+    budget: {
+        type: Number,
+        required: true
+    },
+    lockedBudget: {
+        type: Number,
+        default: 0        
+    },
+    budgetOver:{
+        type: Boolean,
+        default: false
+    },
+    noOfPaid: {
+        type: Number,
+        default: 0
+    },
+    payStructure: {
+        type: Map,
+        of:Number,
+        required: true
+    },
+    deadline: {
+        type: Date,
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ['open', 'closed', 'in-progress', 'completed'],
+        default: 'open'
+    },
+    submissions: [{
+        creatorId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        proofUrl: {
+            type: String,
+            required: true
+        },
+        approved: {
+            type: Boolean,
+            default: false
+        },
+        payout: {
+            type: Number,
+            default: 0
+        }
+    }],
+    payoutHistory: [{
+        creatorId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        amount: {
+            type: Number,
+            required: true
+        },
+        date: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    totalApplicants: {
+        type: Number,
+        default: 0
+    },
+    rejectedApplicants: [{
+        creatorId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        reason: {
+            type: String,
+            required: true
+        }
+    }],
+   
 });
 
 postSchema.pre('save', async function (next) {

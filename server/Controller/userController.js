@@ -8,6 +8,9 @@ UserController.register = async (req, res, next) => {
 UserController.login = async (req, res, next) => {
     await UserApi.loginUser(req, res);
 };
+UserController.logout = async (req, res, next) => {
+    await UserApi.logoutUser(req, res);
+};
 UserController.getUser = async (req, res, next) => {
     await UserApi.getUser(req, res);
 };

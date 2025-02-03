@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 // Create Post
 const createPost = async (req, res) => {
     try {
-        const { userId, content, title, detailedDescription, followersRange, category, instructions, postType } = req.body;
+        const { userId, content, title, detailedDescription, followersRange, category, instructions, postType, budget, payStructure, deadline, platform } = req.body;
 
         if (instructions && (instructions.length > 5 || instructions.some(instr => instr.length > 250))) {
             return res.status(400).json({ error: 'Instructions must not exceed 5 items and each item must be less than 250 characters.' });
@@ -16,7 +16,14 @@ const createPost = async (req, res) => {
         if (!user) {
             return res.status(400).json({ error: 'Invalid userId' });
         }
+        if (!budget || !payStructure || !deadline || !platform) {
+            return res.status(400).json({ error: 'Missing fields' });
+        }
 
+        if (user.role !== 'brand') {
+            return res.status(403).json({ error: 'Only brands can create posts' });
+        }
+            
         let uniqueId;
         let isUnique = false;
 
@@ -36,8 +43,12 @@ const createPost = async (req, res) => {
             followersRange,
             category,
             instructions,
-            postType,
-            uniqueId
+            postType,   
+            uniqueId,
+            budget,
+            payStructure,
+            deadline,
+            platform
         });
 
         await newPost.save();
@@ -121,7 +132,7 @@ const calculateTrendingScore = (post) => {
 const updatePost = async (req, res) => {
     try {
         const { id: postId } = req.params;
-        const { title, detailedDescription, followersRange, category, instructions } = req.body;
+        const { title, detailedDescription, followersRange, category, instructions,payStructure, deadline } = req.body;
 
         if (instructions.length > 5 || instructions.some(instr => instr.length > 250)) {
             return res.status(400).json({ error: 'Instructions must not exceed 5 items and each item must be less than 250 characters.' });
@@ -132,7 +143,9 @@ const updatePost = async (req, res) => {
             detailedDescription,
             followersRange,
             category,
-            instructions
+            instructions,
+            payStructure,
+            deadline
         }, { new: true }).lean();
 
         if (!updatedPost) {
@@ -169,11 +182,40 @@ const deletePost = async (req, res) => {
 const applyToPromotion = async (req, res) => {
     try {
         const { id: postId } = req.params;
-        const { userId } = req.body;
+        const { userId, platform } = req.body;
+
+        const post = await Post.findById(postId);
+        if (!post) return res.status(404).json({ message: "Campaign not found" });
+
+        if (post.budgetOver) {
+            return res.status(400).json({ message: "Applications are closed, budget is fully allocated" });
+        }
 
         const user = await User.findById(userId);
         if (!user) {
             return res.status(400).json({ error: 'Invalid userId' });
+        }
+
+        if (user.role !== 'creator') {
+            return res.status(403).json({ error: 'Only creators can apply to promotions' });
+        }
+
+        if (user.followersRange !== post.followersRange || user.category !== post.category || user.niche !== post.niche) {
+            return res.status(400).json({ error: 'User profile does not match post requirements' });
+        }
+
+        const payoutAmount = post.payStructure[user.followers] || 0;
+        if (payoutAmount === 0) {
+            return res.status(400).json({ message: "No payout defined for your follower range" });
+        }
+
+        if (post.lockedBudget + payoutAmount > post.budget) {
+            return res.status(400).json({ message: "Not enough budget available" });
+        }
+
+
+        if (post.lockedBudget >= post.budget) {
+            post.budgetOver = true;
         }
 
         const update = {
@@ -193,7 +235,91 @@ const applyToPromotion = async (req, res) => {
     }
 };
 
-// Withdraw Application
+// Approve Application
+const approveApplication = async (req, res) => {
+    try {
+        const { id: postId } = req.params;
+        const { userId } = req.body;
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid userId' });
+        }
+
+        if (!post.analytics.appliedUsers.includes(userId)) {
+            return res.status(400).json({ error: 'User has not applied to this promotion' });
+        }
+        const loggedInUserId = req.user.id;
+
+        if (post.userId.toString() !== loggedInUserId) {
+            return res.status(403).json({ error: 'Only the post creator can approve applications' });
+        }
+        
+        if (post.analytics.approvedUsers.includes(userId)) {
+            return res.status(400).json({ error: 'User has already been approved' });
+        }
+
+        const payoutAmount = post.payStructure[user.followers] || 0;
+        post.lockedBudget += payoutAmount;
+        post.appliedUsers.push(userId);
+
+
+        const update = {
+            $set: { 'analytics.approvedUsers': userId, 'analytics.payAmount': payAmount, lastEngagement: new Date() }
+        };
+
+        const updatedPost = await Post.findByIdAndUpdate(postId, update, { new: true }).lean();
+        if (!updatedPost) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
+        res.status(200).json({ message: 'Application approved successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const approveSubmission = async (req, res) => {
+    try {
+        const { postId, userId } = req.params;
+
+        const post = await Post.findById(postId);
+        if (!post) return res.status(404).json({ message: "Campaign not found" });
+
+        const submission = post.submissions?.find(sub => sub.userId.toString() === userId);
+        if (!submission) {
+            return res.status(400).json({ message: "No promotion submission found" });
+        }
+
+        const loggedInUserId = req.user.id;
+        if (post.userId.toString() !== loggedInUserId) {
+            return res.status(403).json({ error: 'Only the post creator can accept submissions' });
+        }
+
+        const user = await User.findById(userId);
+        const payoutAmount = post.payStructure[user.followers] || 0;
+
+        user.purse = (user.purse || 0) + payoutAmount;
+        await user.save();
+
+        // Remove from locked budget
+        post.lockedBudget -= payoutAmount;
+        post.noOfPaid += 1;
+
+        await post.save();
+        res.status(200).json({ message: "Payment released to creator!" });
+
+    } catch (error) {
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+}
+
+
 const withdrawApplication = async (req, res) => {
     try {
         const { id: postId } = req.params;
@@ -304,7 +430,6 @@ const likePost = async (req, res) => {
     }
 };
 
-// Remove Like from Post
 const removeLikeFromPost = async (req, res) => {
     try {
         const { id: postId } = req.params;
@@ -351,5 +476,7 @@ module.exports = {
     bookmarkPost,
     unbookmarkPost,
     likePost,
-    removeLikeFromPost
+    removeLikeFromPost,
+    approveApplication,
+    approveSubmission
 };

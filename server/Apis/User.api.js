@@ -65,17 +65,19 @@ const loginUser = async (req, res) => {
         if (!user) {
             return res.status(401).json({ message: 'Invalid credential' });
         }
-        const isValid = await user.comparePassword(password, user.password);
+        const isValid = await user.comparePassword(password);
         if (!isValid) {
             return res.status(401).json({ message: 'Incorrect password' });
         }
-        // Problem: Token may not be set immediately after login, causing profile page API to fail.
-        // Expected: Token should be stored in cookies/headers and available for API requests immediately after login.
-
+        
         const token = user.generateAuthToken();
+        const refreshToken = user.generateRefreshToken();
         console.log('Token generated called');
         const cookieExpires = 3600000; // 1 hour in milliseconds
-        setCookie(res, token, cookieExpires);
+        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict', maxAge: 15 * 60 * 1000 }); // 15 mins
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        res.setHeader('Authorization', `Bearer ${token}`);
+        res.setHeader('Refresh-Token', refreshToken);
         setHeader(res, token);
         console.log(`token set ${token}`);
         res.send({
@@ -84,9 +86,12 @@ const loginUser = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email
-            }
+            },
+            authToken: token,
+            refreshToken: refreshToken
         });
-
+        
+        await User.findByIdAndUpdate(user._id, { refreshToken: refreshToken });
     }
     catch (error) {
         console.error(error);
@@ -97,15 +102,42 @@ const loginUser = async (req, res) => {
     }
 };
 
+const logoutUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        if (!user) {
+            return res.status(401).json({ message: 'User not found' });
+        }
+
+       
+        await User.findByIdAndUpdate(user._id, { refreshToken: null });
+
+
+        // Clear cookies
+        res.clearCookie('token');
+        res.clearCookie('refreshToken');
+
+        res.status(200).json({ message: 'Logged out successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Logout failed', error: error.message });
+    }
+};
 
 const getUser = async (req, res) => {
     try {
-        const token = req.header('Authorization').split(' ')[1];
+        const token = req.cookies.token
+        console.log(token)
+        if (!token) {
+            return res.status(401).json({ message: "Not authenticated" });
+        }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded._id).select('-password');
         res.send(user);
     } catch (error) {
-        res.status(400).send({ message: 'Error getting user' });
+        res.status(400).send({
+            error: error.message,
+            message: 'Error getting user'
+        });
     }
 };
 
@@ -176,9 +208,13 @@ const verifyOtp = async (req, res) => {
 
         delete otpStore[email];
         const token = user.generateAuthToken();
+        const refreshToken = user.generateRefreshToken();
         console.log('Token generated called');
-        const cookieExpires = 3600000; // 1 hour in milliseconds
-        setCookie(res, token, cookieExpires);
+        res.cookie('token', token, { secure: true, maxAge: 15 * 60 * 1000 }); // 15 mins
+        res.cookie('refreshToken', refreshToken, { secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        res.setHeader('Authorization', `Bearer ${token}`);
+        res.setHeader('Refresh-Token', refreshToken);
+        setHeader(res, token);
         setHeader(res, token);
         res.status(200).send({
             message: 'Registration successful',
@@ -186,7 +222,9 @@ const verifyOtp = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email
-            }
+            },
+            authToken: token,
+            refreshToken: refreshToken
         });
     } catch (error) {
         console.error('Error verifying OTP: ', error.message);
@@ -223,7 +261,7 @@ const forgotPasswordRequestUser = async (req, res) => {
     }
 };
 
-forgotPasswordVerifyOtp = async (req, res) => {
+const forgotPasswordVerifyOtp = async (req, res) => {
     const { otp, newPassword, confirmPassword } = req.body;
     // const email = otpStore[email];
     const otpString = otp.toString();
@@ -277,16 +315,22 @@ const checkUsernameAvailability = async (req, res) => {
     }
 };
 
-module.exports = { 
-    registerUser, 
-    loginUser, 
-    getUser, 
-    updateUser, 
-    sendOtp, 
-    verifyOtp, 
-    forgotPasswordRequestUser, 
-    forgotPasswordVerifyOtp, 
-    forgotPasswordResetUser, 
+const getSocailMediaCount = async (req, res) => {
+
+}
+
+
+module.exports = {
+    registerUser,
+    loginUser,
+    logoutUser,
+    getUser,
+    updateUser,
+    sendOtp,
+    verifyOtp,
+    forgotPasswordRequestUser,
+    forgotPasswordVerifyOtp,
+    forgotPasswordResetUser,
     passwordResetUser,
-    checkUsernameAvailability // Add this line
+    checkUsernameAvailability,   
 };

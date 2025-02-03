@@ -3,6 +3,7 @@ const { check } = require('express-validator');
 const postController = require('../Controller/postController');
 const authMiddleware = require('../Middleware/authenticate');
 const PostController = require('../Controller/postController');
+const authRoutes=require('../Middleware/refreshToken');
 const router = express.Router();
 
 // POST /posts - Create a new post (authenticated)
@@ -30,6 +31,8 @@ router.delete('/posts/:id', authMiddleware, postController.deletePost);
 // POST /posts/:id/apply - Apply to a promotion (authenticated)
 router.post('/posts/:id/apply', authMiddleware, PostController.applyToPromotion);
 
+router.post('/posts/:id/approve', authMiddleware, PostController.approveApplication);
+
 // POST /posts/:id/withdraw - Withdraw application from a promotion (authenticated)
 router.post('/posts/:id/withdraw', authMiddleware, PostController.withdrawApplication);
 
@@ -43,5 +46,9 @@ router.post('/posts/:id/unbookmark', authMiddleware, PostController.unbookmarkPo
 router.post('/posts/:id/removelike', authMiddleware, PostController.removeLikeFromPost);
 
 router.post('/posts/:id/like', authMiddleware, PostController.likePost);
+
+router.post('/posts/:id/accept-submission', authMiddleware, PostController.approveSubmission);
+
+router.use('/auth',authRoutes);
 
 module.exports = router;
