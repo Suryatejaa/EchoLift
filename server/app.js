@@ -8,6 +8,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const bodyParser = require('body-parser');
+const authRoutes = require('./Middleware/refreshToken');
 
 const userRoutes = require('./Routes/userRoutes');
 const feedRoutes = require('./Routes/feedRoutes');
@@ -49,6 +50,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/auth', authRoutes);
 
 mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
@@ -62,6 +64,15 @@ app.get('/', (req, res) => {
     console.log('Received token:', token);  // Log token to verify it was sent with the request
     res.send('Check the console for token.');
 });
+
+app.get('/api/auth/check', (req, res) => {
+    const token = req.cookies.token; // Read token from HttpOnly cookie
+    if (!token) {
+        return res.json({ isAuthenticated: false });
+    }
+    return res.json({ isAuthenticated: true });
+});
+
 
 // WebSocket connection
 io.on('connection', (socket) => {

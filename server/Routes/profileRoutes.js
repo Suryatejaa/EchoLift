@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const profileController = require('../Apis/Profile.api');
-const authMiddleware = require('../middleware/authMiddleware');
+const authMiddleware = require('../Middleware/authenticate');
 const multer = require('multer');
-const authenticate = require('../Middleware/authenticate');
+const authRoutes = require('../Middleware/refreshToken');
+
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -22,5 +23,6 @@ router.get('/get-profile/:id', authMiddleware, profileController.getProfile);
 router.post('/follow/:id',  profileController.followUser);
 router.post('/unfollow/:id',  profileController.unfollowUser);
 router.put('/update-profile/:id', authMiddleware, upload.single('profilePicture'), profileController.updateProfile);
+router.use('/auth', authRoutes);
 
 module.exports = router;

@@ -46,4 +46,12 @@ PostController.trackPostAnalytics = async (req, res, next) => {
     await PostApi.trackPostAnalytics(req, res);
 };
 
+PostController.approveApplication = async (req, res, next) => {
+    await PostApi.approveApplication(req, res);
+};
+
+PostController.approveSubmission = async (req, res, next) => {
+    await PostApi.approveSubmission(req, res);
+}
+
 module.exports = PostController;

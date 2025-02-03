@@ -2,6 +2,8 @@ const express = require('express');
 const { check } = require('express-validator');
 const router = express.Router();
 const FeedController = require('../Controller/feedController');
+const authRoutes = require('../Middleware/refreshToken');
+
 
 
 router.get('/foryou', [
@@ -14,5 +16,7 @@ router.get('/following', [
     check('page').optional().isInt({ min: 1 }),
     check('limit').optional().isInt({ min: 1 })
 ], FeedController.authenticateJWT, FeedController.getFollowingFeed);
+
+router.use('/auth', authRoutes);
 
 module.exports = router;

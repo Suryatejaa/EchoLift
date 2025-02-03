@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
 const User = require('../Models/userSchema');
+const cookieHelper = require('../utils/cookieHelper');
 
 const authMiddleware = async (req, res, next) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    // Problem: Token may not be set immediately after login, causing profile page API to fail.
-    // Expected: Token should be stored in cookies/headers and available for API requests immediately after login.
-
+    const tokenFromCookie = req.cookies.authToken || cookieHelper.getCookie(req, 'authToken');
+    const token = req.cookies.token
+    // console.log('tokenFromCookie', token);
     if (!token) {
         return res.status(401).json({ message: 'Authorization token is missing' });
     }
@@ -18,11 +18,14 @@ const authMiddleware = async (req, res, next) => {
             return res.status(401).json({ message: 'Invalid token or user not found' });
         }
 
-        req.user = user; 
+        req.user = user;
         req.userId = user._id;
         next();
     } catch (error) {
-        res.status(401).json({ message: 'Authentication failed', error });
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Token expired', error: error.message });
+        }
+        res.status(500).json({ message: 'Authentication failed', error: error.message });
     }
 };
 
