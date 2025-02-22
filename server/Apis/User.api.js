@@ -1,7 +1,6 @@
 const User = require('../Models/userSchema');
 const admin = require('firebase-admin');
-// const localStorage = require('localStorage');
-import { LocalStorage } from 'node-localstorage';
+const { LocalStorage } = require('node-localstorage');
 const localStorage = new LocalStorage('./scratch');
 const serviceAccount = require('../config/echolift-55215-987c2c1ef62c.json');
 const otpStore = {};
@@ -11,17 +10,12 @@ const { setCookie } = require('../utils/cookieHelper');
 const { setHeader } = require('../utils/headerHelper');
 const jwt = require('jsonwebtoken');
 
-
-// const otpGenerator = require('../utils/otpGenerator');
-// const sendOtpEmail = require('../utils/sendOtpEmail');
-
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
 
 const registerUser = async (req, res) => {
     try {
-
         const { name, username, email, phoneNumber, gender, role, password } = req.body;
 
         // Store user data temporarily
@@ -29,22 +23,17 @@ const registerUser = async (req, res) => {
 
         try {
             const otpResponse = await axios.post('http://localhost:5000/api/users/otp/send', userDetails);
-            // await sendOtp(email, userDetails);
-
             if (otpResponse.status === 200) {
                 res.status(200).send({
                     message: 'OTP sent to your email. Verify OTP to complete registration.'
                 });
             }
-        }
-        catch (error) {
-
+        } catch (error) {
             return res.status(400).send({
                 message: 'Error send otp',
                 error: error.response?.data?.message || error.message
             });
         }
-
     } catch (error) {
         res.status(400).send({
             message: 'Error registering user',
@@ -52,7 +41,6 @@ const registerUser = async (req, res) => {
         });
     }
 };
-
 
 const loginUser = async (req, res) => {
     try {
@@ -71,7 +59,7 @@ const loginUser = async (req, res) => {
         if (!isValid) {
             return res.status(401).json({ message: 'Incorrect password' });
         }
-        
+
         const token = user.generateAuthToken();
         const refreshToken = user.generateRefreshToken();
         console.log('Token generated called');
@@ -92,10 +80,9 @@ const loginUser = async (req, res) => {
             authToken: token,
             refreshToken: refreshToken
         });
-        
+
         await User.findByIdAndUpdate(user._id, { refreshToken: refreshToken });
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error);
         res.status(400).json({
             message: 'Error logging in user',
@@ -111,9 +98,7 @@ const logoutUser = async (req, res) => {
             return res.status(401).json({ message: 'User not found' });
         }
 
-       
         await User.findByIdAndUpdate(user._id, { refreshToken: null });
-
 
         // Clear cookies
         res.clearCookie('token');
@@ -127,8 +112,8 @@ const logoutUser = async (req, res) => {
 
 const getUser = async (req, res) => {
     try {
-        const token = req.cookies.token
-        console.log(token)
+        const token = req.cookies.token;
+        console.log(token);
         if (!token) {
             return res.status(401).json({ message: "Not authenticated" });
         }
@@ -142,7 +127,6 @@ const getUser = async (req, res) => {
         });
     }
 };
-
 
 const updateUser = async (req, res) => {
     try {
@@ -160,7 +144,6 @@ const otpGenerator = require('../utils/otpGenerator');
 const sendOtpEmail = require('../utils/sendOtpEmail');
 const sendOtp = async (req, res) => {
     try {
-
         const userDetails = req.body;
         const email = userDetails.email;
         const otp = otpGenerator();
@@ -170,14 +153,12 @@ const sendOtp = async (req, res) => {
 
         await sendOtpEmail(email, otp);
         res.status(200).send({ message: 'OTP sent to your email. Verify OTP to complete registration.' });
-
-
     } catch (error) {
         console.error('Error sending OTP: ', error.message);
         throw new Error('Failed to send OTP. Please try again later.');
     }
 };
-console.log("otpStrore: ", otpStore);
+console.log("otpStore: ", otpStore);
 
 const verifyOtp = async (req, res) => {
     try {
@@ -217,7 +198,6 @@ const verifyOtp = async (req, res) => {
         res.setHeader('Authorization', `Bearer ${token}`);
         res.setHeader('Refresh-Token', refreshToken);
         setHeader(res, token);
-        setHeader(res, token);
         res.status(200).send({
             message: 'Registration successful',
             user: {
@@ -230,12 +210,9 @@ const verifyOtp = async (req, res) => {
         });
     } catch (error) {
         console.error('Error verifying OTP: ', error.message);
-
         res.status(500).send({ message: 'Error verifying OTP. Please try again.' });
     }
 };
-
-
 
 const forgotPasswordRequestUser = async (req, res) => {
     const { credential } = req.body;
@@ -253,9 +230,7 @@ const forgotPasswordRequestUser = async (req, res) => {
 
     try {
         await sendOtp(userDetails, res);
-    }
-    catch (error) {
-
+    } catch (error) {
         return res.status(400).send({
             message: 'Error send otp',
             error: error.response?.data?.message || error.message
@@ -265,9 +240,8 @@ const forgotPasswordRequestUser = async (req, res) => {
 
 const forgotPasswordVerifyOtp = async (req, res) => {
     const { otp, newPassword, confirmPassword } = req.body;
-    // const email = otpStore[email];
     const otpString = otp.toString();
-    console.log("otpstore: ", otpStore);
+    console.log("otpStore: ", otpStore);
     for (const email in otpStore) {
         if (otpStore[email].otp === otpString) {
             if (Date.now() > otpStore[email].otpExpiry) {
@@ -275,7 +249,6 @@ const forgotPasswordVerifyOtp = async (req, res) => {
             }
             req.body.email = email;
             return forgotPasswordResetUser({ body: { email, newPassword, confirmPassword } }, res);
-            // return res.status(200).send({ message: 'OTP verified successfully' });
         }
     }
     return res.status(400).send({ message: 'Invalid OTP' });
@@ -317,11 +290,6 @@ const checkUsernameAvailability = async (req, res) => {
     }
 };
 
-const getSocailMediaCount = async (req, res) => {
-
-}
-
-
 module.exports = {
     registerUser,
     loginUser,
@@ -334,5 +302,5 @@ module.exports = {
     forgotPasswordVerifyOtp,
     forgotPasswordResetUser,
     passwordResetUser,
-    checkUsernameAvailability,   
+    checkUsernameAvailability
 };
