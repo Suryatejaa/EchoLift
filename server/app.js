@@ -15,7 +15,7 @@ const feedRoutes = require('./Routes/feedRoutes');
 const postRoutes = require('./Routes/postRoutes');
 const profileRoutes = require('./Routes/profileRoutes');
 const searchRoutes = require('./Routes/searchRoutes');
-const notificationsRouter = require('./routes/notifications');
+const notificationsRouter = require('./Routes/notifications');
 const facebookApi = require('./SocialMediaAPI/facebookApi');
 const { use } = require('passport');
 
