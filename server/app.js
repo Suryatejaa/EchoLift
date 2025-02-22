@@ -53,7 +53,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/auth', authRoutes);
 
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
