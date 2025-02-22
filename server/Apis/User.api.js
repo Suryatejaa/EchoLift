@@ -1,6 +1,8 @@
 const User = require('../Models/userSchema');
 const admin = require('firebase-admin');
-const localStorage = require('localStorage');
+// const localStorage = require('localStorage');
+import { LocalStorage } from 'node-localstorage';
+const localStorage = new LocalStorage('./scratch');
 const serviceAccount = require('../config/echolift-55215-987c2c1ef62c.json');
 const otpStore = {};
 const axios = require('axios');
