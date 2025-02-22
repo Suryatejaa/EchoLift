@@ -1,7 +1,7 @@
 const express = require('express');
 const User = require('../Models/userSchema');
-const RecentSearch = require('../models/RecentSearch');
-const authMiddleware = require('../middleware/authMiddleware'); // Assuming you have an auth middleware
+const RecentSearch = require('../Models/RecentSearch');
+const authMiddleware = require('../Middleware/authMiddleware'); // Assuming you have an auth middleware
 
 // Apply the auth middleware to all routes in this file
 
