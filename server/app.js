@@ -16,6 +16,7 @@ const postRoutes = require('./Routes/postRoutes');
 const profileRoutes = require('./Routes/profileRoutes');
 const searchRoutes = require('./Routes/searchRoutes');
 const notificationsRouter = require('./routes/notifications');
+const facebookApi = require('./SocialMediaAPI/facebookApi');
 const { use } = require('passport');
 
 dotenv.config();
@@ -73,6 +74,8 @@ app.get('/api/auth/check', (req, res) => {
     return res.json({ isAuthenticated: true });
 });
 
+app.get('/auth/callback', facebookApi.callback);
+app.get('/auth/facebook', facebookApi.oAuthFb);
 
 // WebSocket connection
 io.on('connection', (socket) => {
