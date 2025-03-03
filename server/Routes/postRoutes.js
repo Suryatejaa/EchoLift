@@ -3,7 +3,7 @@ const { check } = require('express-validator');
 const postController = require('../Controller/postController');
 const authMiddleware = require('../Middleware/authenticate');
 const PostController = require('../Controller/postController');
-const authRoutes=require('../Middleware/refreshToken');
+const authRoutes = require('../Middleware/refreshToken');
 const router = express.Router();
 
 // POST /posts - Create a new post (authenticated)
@@ -31,6 +31,7 @@ router.delete('/posts/:id', authMiddleware, postController.deletePost);
 // POST /posts/:id/apply - Apply to a promotion (authenticated)
 router.post('/posts/:id/apply', authMiddleware, PostController.applyToPromotion);
 
+// POST /posts/:id/approve - Approve an application (authenticated)
 router.post('/posts/:id/approve', authMiddleware, PostController.approveApplication);
 
 // POST /posts/:id/withdraw - Withdraw application from a promotion (authenticated)
@@ -45,10 +46,12 @@ router.post('/posts/:id/unbookmark', authMiddleware, PostController.unbookmarkPo
 // POST /posts/:id/removelike - Remove like from a post (authenticated)
 router.post('/posts/:id/removelike', authMiddleware, PostController.removeLikeFromPost);
 
+// POST /posts/:id/like - Like a post (authenticated)
 router.post('/posts/:id/like', authMiddleware, PostController.likePost);
 
+// POST /posts/:id/accept-submission - Approve a submission (authenticated)
 router.post('/posts/:id/accept-submission', authMiddleware, PostController.approveSubmission);
 
-router.use('/auth',authRoutes);
+router.use('/auth', authRoutes);
 
 module.exports = router;

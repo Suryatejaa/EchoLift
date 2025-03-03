@@ -9,6 +9,8 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const bodyParser = require('body-parser');
 const authRoutes = require('./Middleware/refreshToken');
+const qs = require('qs');
+const axios = require('axios');
 
 const userRoutes = require('./Routes/userRoutes');
 const feedRoutes = require('./Routes/feedRoutes');
@@ -16,8 +18,8 @@ const postRoutes = require('./Routes/postRoutes');
 const profileRoutes = require('./Routes/profileRoutes');
 const searchRoutes = require('./Routes/searchRoutes');
 const notificationsRouter = require('./Routes/notifications');
-const facebookApi = require('./SocialMediaAPI/facebookApi');
-const { use } = require('passport');
+const instagramApi = require('./SocialMediaAPI/instagramApi');
+const youtubeApi = require('./SocialMediaAPI/youtubeApi');
 
 dotenv.config();
 
@@ -29,7 +31,6 @@ const io = socketIo(server, {
         methods: ['GET', 'POST'],
         credentials: true
     }
-
 });
 
 app.use(express.json());
@@ -54,9 +55,9 @@ app.use('/api/notifications', notificationsRouter);
 app.use('/api/auth', authRoutes);
 
 mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
+    serverSelectionTimeoutMS: 10000 // Increase timeout to 30s
+}
+)
     .then(() => console.log('MongoDB Connected'))
     .catch((err) => console.log('MongoDb connection error', err));
 
@@ -74,8 +75,14 @@ app.get('/api/auth/check', (req, res) => {
     return res.json({ isAuthenticated: true });
 });
 
-app.get('/auth/callback', facebookApi.callback);
-app.get('/auth/facebook', facebookApi.oAuthFb);
+app.get('/auth/callback', instagramApi.callback);
+app.get('/auth/redirect', instagramApi.redirect);
+app.get('/auth/callbackapp', instagramApi.callback_app1);
+app.get('/auth/redirectapp', instagramApi.redirect_app1);
+app.get('/auth/youtube', youtubeApi.youtube);
+app.get('/auth/youtube/callback', youtubeApi.callback);
+
+
 
 // WebSocket connection
 io.on('connection', (socket) => {
@@ -100,13 +107,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// const PORT = process.env.PORT || 5000;
-// if (process.env.NODE_ENV !== 'test') {
-//     server.listen(PORT, () => {
-//         console.log('App running on ' + PORT);
-//     });
-// }
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
     console.log('App running on ' + PORT);
 });

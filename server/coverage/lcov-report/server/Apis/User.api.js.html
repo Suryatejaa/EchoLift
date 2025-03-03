@@ -675,7 +675,7 @@ const registerUser = <span class="fstat-no" title="function not covered" >as</sp
 <span class="cstat-no" title="statement not covered" >        userDetails = { name, username, email, phoneNumber, gender, role, password };</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        try {</span>
-            const otpResponse = <span class="cstat-no" title="statement not covered" >await axios.post('http://localhost:5000/api/users/otp/send', userDetails);</span>
+            const otpResponse = <span class="cstat-no" title="statement not covered" >await axios.post('https://echolift-production.up.railway.app/api/users/otp/send', userDetails);</span>
             // await sendOtp(email, userDetails);
 &nbsp;
 <span class="cstat-no" title="statement not covered" >            if (otpResponse.status === 200) {</span>
