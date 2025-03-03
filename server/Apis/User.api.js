@@ -22,7 +22,7 @@ const registerUser = async (req, res) => {
         userDetails = { name, username, email, phoneNumber, gender, role, password };
 
         try {
-            const otpResponse = await axios.post('http://localhost:5000/api/users/otp/send', userDetails);
+            const otpResponse = await axios.post('https://echolift-production.up.railway.app/api/users/otp/send', userDetails);
             if (otpResponse.status === 200) {
                 res.status(200).send({
                     message: 'OTP sent to your email. Verify OTP to complete registration.'
@@ -30,7 +30,7 @@ const registerUser = async (req, res) => {
             }
         } catch (error) {
             return res.status(400).send({
-                message: 'Error send otp',
+                message: 'Error sending otp',
                 error: error.response?.data?.message || error.message
             });
         }
