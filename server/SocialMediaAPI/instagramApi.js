@@ -61,8 +61,7 @@ const callback_app1 = async (req, res) => {
 
 const CLIENT_ID = process.env.INSTA_CLIENT_ID;
 const CLIENT_SECRET = process.env.INSTA_CLIENT_SECRET;
-console.log('Client ID ', CLIENT_ID);
-console.log('Client Sceret ', CLIENT_SECRET);
+
 const REDIRECT_URI = "https://echolift-production.up.railway.app/auth/redirect";
 
 const redirect = async (req, res) => {
@@ -71,10 +70,6 @@ const redirect = async (req, res) => {
     if (!code) {
         return res.status(400).json({ error: "Authorization code not provided" });
     }
-
-    console.log('Client ID ', CLIENT_ID);
-    console.log('Client Sceret ', CLIENT_SECRET);
-
 
     try {
         // Exchange the authorization code for an access token
@@ -127,8 +122,7 @@ const redirect = async (req, res) => {
 
 const CLIENT_ID_APP1 = process.env.INSTA_CLIENT_ID_APP1;
 const CLIENT_SECRET_APP1 = process.env.INSTA_CLIENT_SECRET_APP1;
-console.log('Client Id app ', CLIENT_ID_APP1);
-console.log('Client Sceret app', CLIENT_SECRET_APP1);
+
 const REDIRECT_URI_APP1 = "https://echolift-production.up.railway.app/auth/redirectapp";
 
 
@@ -138,9 +132,6 @@ const redirect_app1 = async (req, res) => {
     if (!code) {
         return res.status(400).json({ error: "Authorization code not provided" });
     }
-
-    console.log('Client ID ', CLIENT_ID_APP1);
-    console.log('Client Sceret ', CLIENT_SECRET_APP1);
 
 
     try {
@@ -173,7 +164,7 @@ const redirect_app1 = async (req, res) => {
         );
 
         const { access_token: longLivedToken, expires_in } = longLivedTokenResponse.data;
-        console.log("Long-Lived Token:", longLivedToken); 
+        console.log("Long-Lived Token:", longLivedToken);
 
         const expiresInDays = Math.round((expires_in / 3600) / 24);;
         console.log("Expires In:", expiresInDays, "days");

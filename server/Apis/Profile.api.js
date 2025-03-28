@@ -44,21 +44,21 @@ const updateProfile = async (req, res) => {
         }
 
         const updateData = {
-            name : req.body.name,
-            username : req.body.username,
-            bio : req.body.bio,
-            gender : req.body.gender,
-            profilePicture : req.file
+            name: req.body.name,
+            username: req.body.username,
+            bio: req.body.bio,
+            gender: req.body.gender,
+            profilePicture: req.file
                 ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`
                 : profile.profilePicture
-        }
+        };
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
             updateData,
             { new: true }
         );
 
-        console.log(updateData.name, updateData.username,updateData.bio,updateData.gender)
+        console.log(updateData.name, updateData.username, updateData.bio, updateData.gender);
         res.status(200).json(updatedUser);
 
     } catch (error) {
@@ -84,7 +84,7 @@ const followUser = async (req, res) => {
             return res.status(400).json({ message: 'You cannot follow yourself' });
         }
 
-        if (userToFollow.followers.includes(currentUser._id)&&currentUser.following.includes(userToFollow._id)) {
+        if (userToFollow.followers.includes(currentUser._id) && currentUser.following.includes(userToFollow._id)) {
             // console.log(res)
             return res.status(400).json({ message: 'You are already following this user' });
         }
@@ -117,7 +117,7 @@ const unfollowUser = async (req, res) => {
         if (userToUnfollow._id.toString() === currentUser._id.toString()) {
             // console.log(res)
             return res.status(400).json({ message: 'You cannot unfollow yourself' });
-        }   
+        }
 
         const followerIndex = userToUnfollow.followers.indexOf(currentUser._id);
         const followingIndex = currentUser.following.indexOf(userToUnfollow._id);

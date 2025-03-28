@@ -1,12 +1,9 @@
 const express = require('express');
 const User = require('../Models/userSchema');
 const RecentSearch = require('../Models/RecentSearch');
-const authMiddleware = require('../Middleware/authMiddleware'); // Assuming you have an auth middleware
-
-// Apply the auth middleware to all routes in this file
 
 
-// Fetch users based on a query (username) using a case-insensitive search
+
 const search = async (req, res) => {
     const { query, save } = req.query;
     const userId = req.user._id; // Assuming user ID is available in req.user
@@ -17,7 +14,6 @@ const search = async (req, res) => {
     try {
         let users = [];
         if (query.length === 1) {
-            // Fetch usernames that start with the single character (case-insensitive)
             users = await User.find(
                 { username: { $regex: `^${query}`, $options: 'i' } },
                 { password: 0, phoneNumber: 0, email: 0 }
@@ -35,13 +31,11 @@ const search = async (req, res) => {
 
         }
 
-        // Store the search query in RecentSearch schema only if save is true
         if (save === 'true') {
             const recentSearch = new RecentSearch({ query, userId });
             await recentSearch.save();
         }
 
-        // Fetch recent searches for the logged-in user
         const recentSearches = await RecentSearch.find({ userId }).sort({ createdAt: -1 }).limit(10);
 
         res.json({ users, recentSearches });
@@ -50,7 +44,6 @@ const search = async (req, res) => {
     }
 };
 
-// Fetch recent searches
 const getRecentSearches = async (req, res) => {
     const userId = req.user._id; // Assuming user ID is available in req.user
 

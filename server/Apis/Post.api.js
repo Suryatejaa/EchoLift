@@ -6,8 +6,8 @@ const mongoose = require('mongoose');
 // Create Post
 const createPost = async (req, res) => {
     try {
-        const { userId, content, title, detailedDescription, followersRange, category, instructions, postType, budget, payStructure, deadline, platform } = req.body;
-
+        const { content, title, detailedDescription, followersRange, category, instructions, postType, budget, payStructure, deadline, platform } = req.body;
+        const userId = req.user._id;
         if (instructions && (instructions.length > 5 || instructions.some(instr => instr.length > 250))) {
             return res.status(400).json({ error: 'Instructions must not exceed 5 items and each item must be less than 250 characters.' });
         }
@@ -23,7 +23,7 @@ const createPost = async (req, res) => {
         if (user.role !== 'brand') {
             return res.status(403).json({ error: 'Only brands can create posts' });
         }
-            
+
         let uniqueId;
         let isUnique = false;
 
@@ -43,7 +43,7 @@ const createPost = async (req, res) => {
             followersRange,
             category,
             instructions,
-            postType,   
+            postType,
             uniqueId,
             budget,
             payStructure,
@@ -73,7 +73,7 @@ const getPost = async (req, res) => {
             return res.status(404).json({ error: 'Post not found' });
         }
 
-        const userId = req.user.id;
+        const userId = req.user._id;
 
         if (post.userId._id.toString() === userId) {
             post.trendingScore = calculateTrendingScore(post);
@@ -132,7 +132,7 @@ const calculateTrendingScore = (post) => {
 const updatePost = async (req, res) => {
     try {
         const { id: postId } = req.params;
-        const { title, detailedDescription, followersRange, category, instructions,payStructure, deadline } = req.body;
+        const { title, detailedDescription, followersRange, category, instructions, payStructure, deadline } = req.body;
 
         if (instructions.length > 5 || instructions.some(instr => instr.length > 250)) {
             return res.status(400).json({ error: 'Instructions must not exceed 5 items and each item must be less than 250 characters.' });
@@ -259,7 +259,7 @@ const approveApplication = async (req, res) => {
         if (post.userId.toString() !== loggedInUserId) {
             return res.status(403).json({ error: 'Only the post creator can approve applications' });
         }
-        
+
         if (post.analytics.approvedUsers.includes(userId)) {
             return res.status(400).json({ error: 'User has already been approved' });
         }
@@ -317,7 +317,7 @@ const approveSubmission = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
-}
+};
 
 
 const withdrawApplication = async (req, res) => {
@@ -346,8 +346,7 @@ const withdrawApplication = async (req, res) => {
 const bookmarkPost = async (req, res) => {
     try {
         const { id: postId } = req.params;
-        const { userId } = req.body;
-
+        const { userId } = req.user._id;
         const user = await User.findById(userId);
         if (!user) {
             return res.status(400).json({ error: 'Invalid userId' });
@@ -374,7 +373,7 @@ const bookmarkPost = async (req, res) => {
 const unbookmarkPost = async (req, res) => {
     try {
         const { id: postId } = req.params;
-        const { userId } = req.body;
+        const { userId } = req.user._id;
 
         const update = {
             $inc: { 'analytics.bookmarks': -1 },
@@ -397,8 +396,8 @@ const unbookmarkPost = async (req, res) => {
 const likePost = async (req, res) => {
     try {
         const { id: postId } = req.params;
-        const { userId } = req.body;
-
+        const { _id:userId } = req.user;
+       
         const user = await User.findById(userId);
         if (!user) {
             return res.status(400).json({ error: 'Invalid userId' });
@@ -433,7 +432,7 @@ const likePost = async (req, res) => {
 const removeLikeFromPost = async (req, res) => {
     try {
         const { id: postId } = req.params;
-        const { userId } = req.body;
+        const { _id: userId } = req.user;
 
         const user = await User.findById(userId);
         if (!user) {

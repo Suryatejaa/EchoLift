@@ -8,7 +8,6 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const bodyParser = require('body-parser');
-const authRoutes = require('./Middleware/refreshToken');
 const qs = require('qs');
 const axios = require('axios');
 
@@ -20,6 +19,8 @@ const searchRoutes = require('./Routes/searchRoutes');
 const notificationsRouter = require('./Routes/notifications');
 const instagramApi = require('./SocialMediaAPI/instagramApi');
 const youtubeApi = require('./SocialMediaAPI/youtubeApi');
+const authRoutes = require('./Middleware/refreshToken');
+
 
 dotenv.config();
 
@@ -52,12 +53,13 @@ app.use('/api/posts', postRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/notifications', notificationsRouter);
-app.use('/api/auth', authRoutes);
+app.use('/api/refresh-token', authRoutes);
 
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
+
+mongoose.connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 10000 // Increase timeout to 30s
+}
+)
     .then(() => console.log('MongoDB Connected'))
     .catch((err) => console.log('MongoDb connection error', err));
 
@@ -68,7 +70,9 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/auth/check', (req, res) => {
+    console.log('Cookies received:', req.cookies); 
     const token = req.cookies.token; // Read token from HttpOnly cookie
+    console.log(token,' from cookies');
     if (!token) {
         return res.json({ isAuthenticated: false });
     }

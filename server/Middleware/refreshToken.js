@@ -1,11 +1,9 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const User = require('../Models/userSchema');
-const router = express.Router();
 
-router.post('/refresh-token', async (req, res) => {
+const generateRefreshToken = async (req, res) => {
     const refreshToken = req.cookies.refreshToken || req.body.refreshToken || req.header('Refresh-Token');
-    console.log(refreshToken)
+    console.log('from refresh token api ',refreshToken)
     if (!refreshToken) return res.status(401).send({ message: 'Refresh token not provided' });
 
     try {
@@ -16,8 +14,18 @@ router.post('/refresh-token', async (req, res) => {
 
         await User.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken });
 
-        res.cookie('token', newAuthToken, {  secure: true, maxAge: 15 * 60 * 1000 }); // 15 mins
-        res.cookie('refreshToken', newRefreshToken, {  secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        res.cookie('token', newAuthToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 15 * 60 * 1000, // 15 minutes
+        });
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
         res.setHeader('Authorization', `Bearer ${newAuthToken}`);
         res.setHeader('Refresh-Token', newRefreshToken);
 
@@ -32,6 +40,6 @@ router.post('/refresh-token', async (req, res) => {
             error: error.message
         });
     }
-});
+};
 
-module.exports = router;
+module.exports = generateRefreshToken;

@@ -64,8 +64,18 @@ const loginUser = async (req, res) => {
         const refreshToken = user.generateRefreshToken();
         console.log('Token generated called');
         const cookieExpires = 3600000; // 1 hour in milliseconds
-        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict', maxAge: 15 * 60 * 1000 }); // 15 mins
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'Strict', maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        res.cookie('token', token, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 15 * 60 * 1000
+        }); // 15 mins
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        }); // 7 days
         res.setHeader('Authorization', `Bearer ${token}`);
         res.setHeader('Refresh-Token', refreshToken);
         setHeader(res, token);
@@ -93,16 +103,17 @@ const loginUser = async (req, res) => {
 
 const logoutUser = async (req, res) => {
     try {
-        const user = await User.findById(req.userId);
+        const {_id: userId} = req.user;
+        const user = await User.findById(userId);
         if (!user) {
             return res.status(401).json({ message: 'User not found' });
         }
 
         await User.findByIdAndUpdate(user._id, { refreshToken: null });
 
-        // Clear cookies
-        res.clearCookie('token');
-        res.clearCookie('refreshToken');
+        res.clearCookie('token', { httpOnly: true, sameSite: 'None', secure: true });
+        res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'None', secure: true });
+
 
         res.status(200).json({ message: 'Logged out successfully' });
     } catch (error) {
@@ -193,8 +204,8 @@ const verifyOtp = async (req, res) => {
         const token = user.generateAuthToken();
         const refreshToken = user.generateRefreshToken();
         console.log('Token generated called');
-        res.cookie('token', token, { secure: true, maxAge: 15 * 60 * 1000 }); // 15 mins
-        res.cookie('refreshToken', refreshToken, { secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+        res.cookie('token', token, { httpOnly: true, sameSite: 'None', maxAge: 15 * 60 * 1000 }); // 15 mins
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'None', maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
         res.setHeader('Authorization', `Bearer ${token}`);
         res.setHeader('Refresh-Token', refreshToken);
         setHeader(res, token);

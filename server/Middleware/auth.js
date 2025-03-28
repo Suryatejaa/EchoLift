@@ -1,21 +1,28 @@
 const jwt = require('jsonwebtoken');
 const User = require('../Models/userSchema');
-const authenticate = async (req, res, next) => {
+const cookieHelper = require('../utils/cookieHelper');
+
+const authMiddleware = async (req, res, next) => {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ message: 'Authorization token is missing' });
+    }
+
     try {
-        const token = req.headers.authorization.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = await User.findById(decoded.userId);
+        const user = await User.findById(decoded._id);
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid token or user not found' });
+        }
+       
+        req.user = decoded;
         next();
     } catch (error) {
-        res.status(401).send({ message: 'Authentication failed' });
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Token expired', error: error.message });
+        }
+        res.status(500).json({ message: 'Authentication failed', error: error.message });
     }
 };
-const authorizeRoles = (...roles) => {
-    return (req, res, next) => {
-        if (!roles.includes(req.user.role)) {
-            return res.status(403).send({ message: 'Forbidden' });
-        }
-        next();
-    };
-};
-module.exports = { authenticate, authorizeRoles };
+
+module.exports = authMiddleware;
