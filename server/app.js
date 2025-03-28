@@ -8,6 +8,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const bodyParser = require('body-parser');
+const authRoutes = require('./Middleware/refreshToken');
 const qs = require('qs');
 const axios = require('axios');
 
