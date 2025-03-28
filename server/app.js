@@ -8,7 +8,6 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const bodyParser = require('body-parser');
-const authRoutes = require('./Middleware/refreshToken');
 const qs = require('qs');
 const axios = require('axios');
 
@@ -71,9 +70,9 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/auth/check', (req, res) => {
-    console.log('Cookies received:', req.cookies); 
+    console.log('Cookies received:', req.cookies);
     const token = req.cookies.token; // Read token from HttpOnly cookie
-    console.log(token,' from cookies');
+    console.log(token, ' from cookies');
     if (!token) {
         return res.json({ isAuthenticated: false });
     }
