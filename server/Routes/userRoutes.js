@@ -12,7 +12,7 @@ router.post('/register', validateRequest, UserController.register);
 router.post('/login', validateLogin, UserController.login);
 router.get('/me', authenticate, UserController.getUser);
 router.patch('/me', validateRequest, authenticate, UserController.updateUser);
-router.post('/otp/send', validateRequest, authenticate, UserController.sendOtp);
+router.post('/otp/send', validateRequest, UserController.sendOtp);
 router.post('/otp/verify', UserController.verifyOtp);
 
 router.post('/forgot-password-request', UserController.forgotPasswordRequest);

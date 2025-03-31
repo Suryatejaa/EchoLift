@@ -10,5 +10,7 @@ FeedContrtoller.getFollowingFeed = async (req, res, next) => {
 FeedContrtoller.authenticateJWT = async (req, res, next) => {
     await FeedApi.authenticateJWT(req, res);
 };
-
+FeedContrtoller.getCurrentUserPosts = async (req, res, next) => {
+    await FeedApi.getCurrentUserPosts(req, res);
+}
 module.exports = FeedContrtoller;

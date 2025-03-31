@@ -92,7 +92,7 @@ const getFollowingFeed = async (req, res) => {
     const skip = (page - 1) * limit;
 
     try {
-        const {_id: userId} = req.user;
+        const { _id: userId } = req.user;
         const user = await User.findById(userId).populate('following');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -121,6 +121,25 @@ const getFollowingFeed = async (req, res) => {
     }
 };
 
-// GET /feed/foryou - Fetch global posts sorted by timestamp in descending order
+const getCurrentUserPosts = async (req, res) => {
+    const userId = req.params.userId; // Take userId from request parameters    
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-module.exports = { getForYouFeed, getFollowingFeed, authenticateJWT };
+    try {
+        const posts = await Post.find({ userId })
+            .skip(skip)
+            .limit(limit)
+            .populate('userId', 'username') // Populate user info
+            .lean(); // Use lean() for better performance
+
+        res.json(posts);
+    } catch (err) {
+        console.error('Error fetching current user posts:', err);
+        res.status(500).json({ message: err.message });
+    }
+
+    // GET /feed/foryou - Fetch global posts sorted by timestamp in descending order
+};
+module.exports = { getForYouFeed, getFollowingFeed, authenticateJWT, getCurrentUserPosts };

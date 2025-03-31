@@ -18,6 +18,8 @@ router.get('/following', [
     check('limit').optional().isInt({ min: 1 })
 ], authMiddleware, FeedController.getFollowingFeed);
 
+router.get('/currentUser/:userId', authMiddleware, FeedController.getCurrentUserPosts);
+
 router.use('/auth', authRoutes);
 
 module.exports = router;
