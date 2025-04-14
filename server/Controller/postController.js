@@ -54,4 +54,20 @@ PostController.approveSubmission = async (req, res, next) => {
     await PostApi.approveSubmission(req, res);
 }
 
+PostController.likedPosts = async (req, res, next) => {
+    await PostApi.likedPosts(req,res)
+}
+
+PostController.bookmarkedPosts = async (req, res, next) => {
+    await PostApi.bookmarkedPosts(req, res);
+}
+
+PostController.appliedPosts = async (req, res, next) => {
+    await PostApi.appliedPosts(req, res);
+}
+
+PostController.submittedPosts = async (req, res, next) => {
+    await PostApi.submittedPosts(req, res);
+}
+
 module.exports = PostController;

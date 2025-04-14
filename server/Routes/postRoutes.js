@@ -52,6 +52,14 @@ router.post('/posts/:id/like', authMiddleware, PostController.likePost);
 // POST /posts/:id/accept-submission - Approve a submission (authenticated)
 router.post('/posts/:id/accept-submission', authMiddleware, PostController.approveSubmission);
 
+router.get('/liked', authMiddleware, PostController.likedPosts);
+
+router.get('/bookmarked', authMiddleware, PostController.bookmarkedPosts);
+
+router.get('/applied', authMiddleware, PostController.appliedPosts);
+
+router.get('/submitted', authMiddleware, PostController.submittedPosts);
+
 router.use('/auth', authRoutes);
 
 module.exports = router;

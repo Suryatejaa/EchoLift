@@ -2,6 +2,9 @@ const express = require('express');
 const User = require('../Models/userSchema'); // Assuming you have a User model
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
+const { jwt } = require('jsonwebtoken');
+const { use } = require('passport');
+const mongoose = require('mongoose');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -15,14 +18,16 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const getProfile = async (req, res) => {
+    const id = req.params.id;
     try {
-        const profile = await User.findById(req.params.id);
+        const objectId = new mongoose.Types.ObjectId(id); // Convert to ObjectId
+        const profile = await User.findById(objectId);
         if (!profile) {
             return res.status(404).json({ message: 'Profile not found' });
         }
         res.json(profile);
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        res.status(500).json({ message: 'Server error',error: error.message });
     }
 };
 
@@ -31,14 +36,9 @@ const updateProfile = async (req, res) => {
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-
+    const userId = req.user;
     try {
-        const profile = await User.findById(req.params.id);
-        if (!profile) {
-            return res.status(404).json({ message: 'Profile not found' });
-        }
 
-        console.log('Received data:', req.body);
         if (req.file) {
             console.log('Received file:', req.file);
         }
@@ -48,17 +48,14 @@ const updateProfile = async (req, res) => {
             username: req.body.username,
             bio: req.body.bio,
             gender: req.body.gender,
-            profilePicture: req.file
-                ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`
-                : profile.profilePicture
+            niche: req.body.niche
         };
         const updatedUser = await User.findByIdAndUpdate(
-            req.params.id,
+            userId,
             updateData,
             { new: true }
         );
 
-        console.log(updateData.name, updateData.username, updateData.bio, updateData.gender);
         res.status(200).json(updatedUser);
 
     } catch (error) {
@@ -68,10 +65,10 @@ const updateProfile = async (req, res) => {
 };
 
 const followUser = async (req, res) => {
+    const userId = req.user
     try {
         const userToFollow = await User.findById(req.params.id);
-        const currentUser = await User.findById(req.user._id); // Assuming req.user contains the authenticated user        
-        console.log("Current: ", currentUser, "User to follow: ", userToFollow);
+        const currentUser = await User.findById(userId); // Assuming req.user contains the authenticated user        
 
 
         if (!userToFollow || !currentUser) {
@@ -105,10 +102,14 @@ const followUser = async (req, res) => {
 };
 
 const unfollowUser = async (req, res) => {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     try {
         const userToUnfollow = await User.findById(req.params.id);
-        const currentUser = await User.findById(req.user._id); // Assuming req.user contains the authenticated user
-        console.log("Current: ", currentUser, "User to Unfollow: ", userToUnfollow);
+        const currentUser = await User.findById(decoded._id); // Assuming req.user contains the authenticated user
 
         if (!userToUnfollow || !currentUser) {
             // console.log(res)

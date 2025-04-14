@@ -26,13 +26,9 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-    cors: {
-        origin: 'http://localhost:3000',
-        methods: ['GET', 'POST'],
-        credentials: true
-    }
-});
+
+const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
+const SOCIAL_MEDIA_API_URL = process.env.SOCIAL_MEDIA_API_URL || 'https://your-socialmedia-api-domain.com';
 
 app.use(express.json());
 app.use(bodyParser.json());
@@ -41,7 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(cookieParser());
 app.use(cors({
-    origin: 'http://localhost:3000', // Your frontend URL
+    origin: ['http://localhost:3000', 'http://localhost:5173'], // Your frontend URL
     credentials: true // Allow credentials (cookies) to be sent and received
 }));
 
@@ -56,7 +52,7 @@ app.use('/api/notifications', notificationsRouter);
 app.use('/api/refresh-token', authRoutes);
 
 
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.MONGODB_URI, {
     serverSelectionTimeoutMS: 10000 // Increase timeout to 30s
 }
 )
@@ -72,7 +68,6 @@ app.get('/', (req, res) => {
 app.get('/api/auth/check', (req, res) => {
     console.log('Cookies received:', req.cookies);
     const token = req.cookies.token; // Read token from HttpOnly cookie
-    console.log(token, ' from cookies');
     if (!token) {
         return res.json({ isAuthenticated: false });
     }
@@ -87,6 +82,13 @@ app.get('/auth/youtube', youtubeApi.youtube);
 app.get('/auth/youtube/callback', youtubeApi.callback);
 
 
+const io = socketIo(server, {
+    cors: {
+        origin: [BASE_URL, SOCIAL_MEDIA_API_URL],
+        methods: ['GET', 'POST'],
+        credentials: true
+    }
+});
 
 // WebSocket connection
 io.on('connection', (socket) => {

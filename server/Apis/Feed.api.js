@@ -28,9 +28,13 @@ const calculatePostScore = (post, userId) => {
     const postTimestamp = new Date(post.timestamp);
     const lastEngagement = new Date(post.lastEngagement);
 
+    // Ensure likes and analytics.viewedUsers are defined
+    const likes = post.likes || [];
+    const viewedUsers = post.analytics?.viewedUsers || [];
+
     // Check if the user has liked or viewed the post
-    const isLiked = post.likes.some((like) => like.toString() === userId.toString());
-    const isViewed = post.analytics.viewedUsers.some((view) => view.toString() === userId.toString());
+    const isLiked = likes.some((like) => like.toString() === userId.toString());
+    const isViewed = viewedUsers.some((view) => view.toString() === userId.toString());
 
     // Calculate recency score (newer posts get higher scores)
     const recencyScore = Math.max(0, 1 / ((now - postTimestamp) / (1000 * 60 * 60 * 24))); // Days since post

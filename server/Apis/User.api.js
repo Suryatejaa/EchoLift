@@ -22,7 +22,7 @@ const registerUser = async (req, res) => {
         userDetails = { name, username, email, phoneNumber, gender, role, password };
 
         try {
-            const otpResponse = await axios.post('https://echolift-production.up.railway.app/api/users/otp/send', userDetails);
+            const otpResponse = await axios.post('http://localhost:8080/api/users/otp/send', userDetails);
             if (otpResponse.status === 200) {
                 res.status(200).send({
                     message: 'OTP sent to your email. Verify OTP to complete registration.'
@@ -45,6 +45,7 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     try {
         const { credential, password } = req.body;
+        console.log(credential, password);
         const user = await User.findOne({
             $or: [
                 { email: credential },
@@ -103,7 +104,7 @@ const loginUser = async (req, res) => {
 
 const logoutUser = async (req, res) => {
     try {
-        const {_id: userId} = req.user;
+        const { _id: userId } = req.user;
         const user = await User.findById(userId);
         if (!user) {
             return res.status(401).json({ message: 'User not found' });
@@ -124,7 +125,6 @@ const logoutUser = async (req, res) => {
 const getUser = async (req, res) => {
     try {
         const token = req.cookies.token;
-        console.log(token);
         if (!token) {
             return res.status(401).json({ message: "Not authenticated" });
         }
@@ -141,10 +141,14 @@ const getUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     try {
-        const token = req.header('Authorization').split(' ')[1];
-        // Verify token logic will come here
-        const userId = 'user ID from verified token'; // placeholder
-        const user = await User.findByIdAndUpdate(userId, req.body, { new: true });
+        const token = req.cookies.token;
+        if (!token) {
+            return res.status(401).json({ message: "Not authenticated" });
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Body ', req.body);
+        const user = await User.findByIdAndUpdate(decoded._id, req.body, { new: true });
+        console.log('User ', user);
         res.send(user);
     } catch (error) {
         res.status(400).send({ message: 'Error updating user' });

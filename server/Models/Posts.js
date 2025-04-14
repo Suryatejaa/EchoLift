@@ -1,7 +1,8 @@
 const User = require('../Models/userSchema'); // Assuming you have a User model
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-const { generateUniqueId } = require('../utils/generateUniqueId'); // Import the utility function
+// const { generateUniqueId } = require('../utils/generateUniqueId'); // Import the utility function
+const { v4: uuidv4 } = require('uuid');
 
 const postSchema = new Schema({
     userId: {
@@ -30,6 +31,28 @@ const postSchema = new Schema({
     },
     category: {
         type: String,
+        enum: [
+            'Fitness',
+            'Fashion',
+            'Beauty',
+            'Travel',
+            'Food',
+            'Technology',
+            'Gaming',
+            'Photography',
+            'Parenting',
+            'Health & Wellness',
+            'Finance',
+            'Education',
+            'Lifestyle',
+            'Music',
+            'Art',
+            'Sports',
+            'DIY & Crafts',
+            'Automotive',
+            'Pets',
+            'Entrepreneurship'
+        ],
         required: true
     },
     instructions: {
@@ -44,7 +67,6 @@ const postSchema = new Schema({
     uniqueId: {
         type: String,
         unique: true,
-        match: /^[A-Z]{3}[0-9]{4}[A-Z]$/
     },
     likes: [{
         type: Schema.Types.ObjectId,
@@ -54,11 +76,19 @@ const postSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    postType: {
+
+    campaignType: {
         type: String,
-        enum: ['Text', 'Image', 'Video', 'Link'],
+        enum: ['roi', 'product', 'offline'],
         required: true
     },
+
+    couponCodes: {
+        type: Map,
+        of: String,
+        default: {}
+    },
+
     trendingScore: {
         type: Number,
         default: 0
@@ -67,6 +97,28 @@ const postSchema = new Schema({
         type: Date,
         default: Date.now
     },
+    applicants: [{
+        creatorId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        address: {
+            line1: String,
+            line2: String,
+            city: String,
+            state: String,
+            zipCode: String,
+            country: String
+        },
+        requestedPay: Number,
+        couponCode: String, // optional, only needed if campaign is ROI-driven
+        status: {
+            type: String,
+            enum: ['applied', 'approved', 'rejected'],
+            default: 'applied'
+        },
+        deliveryConfirmedDate: Date // Set when brand marks item as delivered
+    }],
     analytics: {
         views: {
             type: Number,
@@ -112,11 +164,10 @@ const postSchema = new Schema({
             ref: 'User',
             default: []
         },
-        bookmarkedUsers: {
-            type: [Schema.Types.ObjectId],
-            ref: 'User',
-            default: []
-        },
+        bookmarkedUsers: [{
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        }],
         viewedUsers: {
             type: [Schema.Types.ObjectId],
             ref: 'User',
@@ -127,7 +178,7 @@ const postSchema = new Schema({
             ref: 'User',
             default: []
         },
-        payAmount: {
+        predefinePay: {
             type: Number,
             default: 0
         }
@@ -142,9 +193,9 @@ const postSchema = new Schema({
     },
     lockedBudget: {
         type: Number,
-        default: 0        
+        default: 0
     },
-    budgetOver:{
+    budgetOver: {
         type: Boolean,
         default: false
     },
@@ -154,7 +205,7 @@ const postSchema = new Schema({
     },
     payStructure: {
         type: Map,
-        of:Number,
+        of: Number,
         required: true
     },
     deadline: {
@@ -198,10 +249,7 @@ const postSchema = new Schema({
             default: Date.now
         }
     }],
-    totalApplicants: {
-        type: Number,
-        default: 0
-    },
+
     rejectedApplicants: [{
         creatorId: {
             type: Schema.Types.ObjectId,
@@ -212,23 +260,14 @@ const postSchema = new Schema({
             required: true
         }
     }],
-   
+
 });
 
-postSchema.pre('save', async function (next) {
+postSchema.pre('save', function (next) {
     if (this.isNew) {
-        let uniqueId;
-        let isUnique = false;
-
-        while (!isUnique) {
-            uniqueId = generateUniqueId();
-            const existingPost = await mongoose.models.Post.findOne({ uniqueId });
-            if (!existingPost) {
-                isUnique = true;
-            }
-        }
-
-        this.uniqueId = uniqueId;
+        const rawUuid = uuidv4(); // Generate a UUID
+        const formattedUuid = rawUuid.slice(0, 4).toUpperCase() + rawUuid.slice(4, 8) + rawUuid.slice(-2).toUpperCase();
+        this.uniqueId = formattedUuid; // Assign the formatted UUID
     }
     next();
 });

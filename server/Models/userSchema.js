@@ -38,6 +38,19 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: null
         },
+
+        deliverAdresses: [
+            {
+                label: { type: String, default: 'Home' }, // Optional label for the address (e.g., Home, Work)
+                line1: { type: String, required: true }, // Street address
+                line2: { type: String }, // Optional additional address info
+                city: { type: String, required: true },
+                state: { type: String, required: true },
+                zipCode: { type: String, required: true },
+                country: { type: String, required: true }
+            }
+        ],
+
         passwordResetToken: { type: String },
         otp: { type: String },
         isVerified: { type: Boolean, default: false },
@@ -61,7 +74,7 @@ const userSchema = new mongoose.Schema(
             youtube: { type: Number, default: 0 },
         },
         currentLocation: { type: String, default: '' },
-        niche: { type: String, default: '' },
+        niche: { type: Array, default: [] },
         purse: { type: Number, default: 0 },
     },
     { timestamps: true }

@@ -19,7 +19,7 @@ const upload = multer({ storage: storage });
 router.use(authMiddleware);
 
 // Define routes with params
-router.get('/get-profile/:id', authMiddleware, profileController.getProfile);
+router.get('/:id', authMiddleware, profileController.getProfile);
 router.post('/follow/:id',  profileController.followUser);
 router.post('/unfollow/:id',  profileController.unfollowUser);
 router.put('/update-profile/:id', authMiddleware, upload.single('profilePicture'), profileController.updateProfile);
